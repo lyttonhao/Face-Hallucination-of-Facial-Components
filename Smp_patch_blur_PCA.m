@@ -1,4 +1,4 @@
-function [ PL, PH, Cp, Cs] = Smp_patch_blur_PCA(patch_size, num_patch, par)
+function [ PL, PH, Cp, Cs, mY, mX] = Smp_patch_blur_PCA(patch_size, num_patch, par)
 
 
 Cs = [];
@@ -13,10 +13,7 @@ type = '*.jpg';
 
 img_dir = dir( fullfile(img_path, type) );
 
-%[U, V, Ih] = cal_NMF_LR( img_path, img_dir, par );
-%save('UV.mat', 'U', 'V', 'Ih');
-%load('UV.mat');
-[PL, PH] = cal_PCA( img_path, img_dir, par );
+[PL, PH, mY, mX] = cal_PCA( img_path, img_dir, par );
 
 fprintf('PCA_over\n');
 
@@ -33,7 +30,6 @@ rf1 = zeros(3,3); rf1(1,3) = -1; rf1(3,1) = 1;
 hf2 = [1,0,-2,0,1];
 vf2 = [1,0,-2,0,1]';
  
-
 for i = 1 : img_num
     imHR               =   imread(fullfile( img_path, img_dir(i).name)) ;
     [im_h, im_w, ch]       =   size(imHR);
@@ -62,10 +58,10 @@ for i = 1 : img_num
  %   for beta = [0.1],
      %   imNMF = get_imNMF(TU, BU, U, imLR, im_h, im_w);
      %imNMF = get_imNMF_GL( U, V, Ih, imLR, im_h, im_w );
-     imPCA = get_imPCA( PL, PH, imLR, im_h, im_w );
+     imPCA = get_imPCA( PL, PH, imLR, mY, mX,  im_h, im_w );
    
     
-        fprintf('PSNR of NMF Training Image: %2.2f \n', csnr(imPCA, imHR, 0, 0));
+        fprintf('PSNR of PCA Training Image: %2.2f \n', csnr(imPCA, imHR, 0, 0));
  %   end
     
     HR_tr{i} = imHR;

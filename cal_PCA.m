@@ -1,4 +1,4 @@
-function [PL, PH] = cal_PCA( img_path, img_dir, par )
+function [PL, PH, mY, mX] = cal_PCA( img_path, img_dir, par )
    
 X = [];
 Y = [];
@@ -26,6 +26,10 @@ for i = 1 : img_num
     Y(:, i) = imLR(:); 
     X(:, i) = imHR(:);
 end
+mY = mean(Y, 2);
+mX = mean(X, 2);
+Y = Y - repmat(mY, [1, img_num]);
+X = X - repmat(mX, [1, img_num]);
 
 C = double( Y * Y' );
 [V, D] = eig( C );
@@ -34,7 +38,7 @@ D = cumsum(D) / sum(D);
 k = find( D >= 1e-3, 1);
 PL = V(:, k:end);
 
-imLR = imHR(1:par.nFactor:im_h, 1:par.nFactor:im_w, :);
+%imLR = imHR(1:par.nFactor:im_h, 1:par.nFactor:im_w, :);
 %B = Set_blur_matrix( par.nFactor, imLR, par.psf, imHR );
 %PL = B*PH;
 

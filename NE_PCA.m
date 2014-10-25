@@ -1,6 +1,5 @@
-% LLE method
 
-clear all;clc;
+%clear all;clc;
 
 addpath('Flann')
 addpath('Data');
@@ -10,7 +9,7 @@ addpath('spams-matlab/build');
 cc = 0;
 re = [];
 
-im_path = 'Data/Face_Testing1/';
+im_path = 'Data/Face_Training1/';
 im_dir = dir( fullfile(im_path, '*.jpg') );
 im_num = length( im_dir );
 
@@ -30,9 +29,9 @@ par.psf =   fspecial('gauss', 7, 1.6);              % The simulated PSF
 
 
 % randomly sample image patches
-[Cp, Cs] = Smp_patch_blur( patch_size, nSmp, par);
+%[Cp, Cs] = Smp_patch_blur( patch_size, nSmp, par);
 %[TU, BU, U, Cp, Cs] = Smp_patch_blur_NMF( patch_size, nSmp, par);
-%[PL, PH, Cp, Cs] = Smp_patch_blur_PCA( patch_size, nSmp, par);
+[PL, PH, Cp, Cs, mY, mX] = Smp_patch_blur_PCA( patch_size, nSmp, par);
 %[U, V, Ih, Cp, Cs] = Smp_patch_blur_NMF_GL( patch_size, nSmp, par);
 %save(['NECps',num2str(par.nFactor)], 'Cp', 'Cs');
 %load(['NECps',num2str(par.nFactor)]);
@@ -87,19 +86,11 @@ for nnn = [9],
   
     [CX CY] = meshgrid(1 : im_w, 1:im_h);
     [X Y] = meshgrid(1:par.nFactor:im_w, 1:par.nFactor:im_h);
-    imBicubic  =   interp2(X, Y, imLR, CX, CY, 'spline');
-    
-%    imNMF = get_imNMF(TU, BU, U, imLR, im_h, im_w);
-   % imNMF = get_imPCA(PL, PH, imLR, im_h, im_w);
- %   imNMF = get_imNMF_GL(U, V, Ih, imLR, im_h, im_w);
-   % c = (BU) \ imLR(:);
-   % imNMF = U * c;
-   % imNMF = reshape(imNMF, [im_h, im_w]);
- %   imNMF = imBicubic;
- 
-    
+    imBicubic  =   interp2(X, Y, imLR, CX, CY, 'spline');    
+    imPCA = get_imPCA(PL, PH, imLR, mY, mX, im_h, im_w) ;
+
     fprintf('Bicubic: %2.2f \n', csnr(imHR, imBicubic, 0, 0));
-  %  fprintf('NMF: %2.2f \n', csnr(imHR, imNMF, 0, 0));
+    fprintf('PCA: %2.2f \n', csnr(imHR, imPCA, 0, 0));
     
     hf1 = [-1,0,1];
     vf1 = [-1,0,1]';
@@ -111,8 +102,8 @@ for nnn = [9],
     hf2 = [1,0,-2,0,1];
     vf2 = [1,0,-2,0,1]';
 
-   [v2 h1] = data2patch(conv2(double(imBicubic), vf2, 'same'), conv2(double(imBicubic), hf1, 'same'), par);
-   [v1, h2] = data2patch(conv2(double(imBicubic), vf1, 'same'), conv2(double( imBicubic), hf2, 'same'), par);
+   [v2 h1] = data2patch(conv2(double(imPCA), vf2, 'same'), conv2(double(imPCA), hf1, 'same'), par);
+   [v1, h2] = data2patch(conv2(double(imPCA), vf1, 'same'), conv2(double( imPCA), hf2, 'same'), par);
    Tl = [h1;v1;h2;v2];
   
    vec_patches = Tl;
@@ -149,7 +140,7 @@ for nnn = [9],
     %    [l1, r1] = patch2data1([output(patch_size*patch_size*2+1:patch_size*patch_size*3, :);output(patch_size*patch_size*3+1:patch_size*patch_size*4, :)], im_h, im_w, 1,par.win, par.step);
         [output, ~] = patch2data([output;output], im_h, im_w, 1,par.win, par.step);
  
-        output = output +  imBicubic ;
+        output = output +  imPCA ;
         result = output;
      %   save ('Mat/cman4.mat', 'h1', 'v1', 'l1','r1');
 
@@ -179,7 +170,7 @@ for nnn = [9],
         end
     
       %  savefile( imLR, ori_HR, im_rgb, result, h1, v1, imB, im_dir(img).name);
-        imwrite(uint8(im_rgb), ['Result/NE_s', num2str(par.nFactor), '_', im_dir(img).name]);
+        imwrite(uint8(im_rgb), ['Result/s', num2str(par.nFactor), '_NE-PCA', im_dir(img).name]);
         imwrite(uint8(imB), ['Result/s', num2str(par.nFactor), '_bicubic', im_dir(img).name]);
         imwrite(uint8(imLR), ['Result/s', num2str(par.nFactor), '_LR', im_dir(img).name]);
     end

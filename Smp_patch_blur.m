@@ -7,14 +7,14 @@ Cp = [];
 
 addpath('Data');
 addpath('Utilities');
-load('Data/train3.mat');
+%load('Data/train3.mat');
 
-%img_path = 'Data\Face_Training1\';
-%type = '*.jpg';
+img_path = 'Data\Face_Training1\';
+type = '*.jpg';
 
-%img_dir = dir( fullfile(img_path, type) );
-%img_num = length( img_dir ) / 10;
-%nper_img = zeros(1, img_num);
+img_dir = dir( fullfile(img_path, type) );
+img_num = length( img_dir ) / 10;
+nper_img = zeros(1, img_num);
 
 
 hf1 = [-1,0,1];
@@ -27,13 +27,13 @@ rf1 = zeros(3,3); rf1(1,3) = -1; rf1(3,1) = 1;
 hf2 = [1,0,-2,0,1];
 vf2 = [1,0,-2,0,1]';
 
-img_num = size(images_hr, 3)-1;
-nper_img = zeros(1, img_num);
+%img_num = size(images_hr, 3)-1;
+%nper_img = zeros(1, img_num);
  
 
 for i = 1 : img_num
-   % imHR               =   imread(fullfile( img_path, img_dir(i).name)) ;
-     imHR  =  images_hr(:,:,i);
+    imHR               =   imread(fullfile( img_path, img_dir(i).name)) ;
+   %  imHR  =  images_hr(:,:,i);
     [im_h, im_w, ch]       =   size(imHR);
     if ch == 3,
         imHR = double( rgb2ycbcr( imHR ));
