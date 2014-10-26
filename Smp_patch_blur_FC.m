@@ -19,6 +19,7 @@ comp{1} = 49:68;        %mouth
 comp{2} = 18:27;        %eyebrows
 comp{3} = 37:48;        %eyes
 comp{4} = 28:36;        %nose
+comp{5} = 1:17;         %face edge
 
 img_num = size(images_hr, 3)-1;
 nper_img = zeros(1, img_num);
@@ -53,7 +54,7 @@ for i = 1 : img_num
 end
 
 nper_img = floor(nper_img*num_patch/sum(nper_img));
-for i = 1:5,
+for i = 1:6,
     Cp{i} = [];
     Cs{i} = [];
 end
@@ -81,13 +82,26 @@ for i = 1 : img_num
     Th1 = Th1(:, idx);
     Cs{1} = [Cs{1}, Th1];
     Cp{1} = [Cp{1}, Tl1];
-    
-    for j = 1:4,
-        y1 = floor(min(lm(comp{j},1))-par.lg);
-        y2 = ceil(max(lm(comp{j},1))+par.lg);
-        x1 = floor(min(lm(comp{j},2))-par.lg);
-        x2 = ceil(max(lm(comp{j},2))+par.lg);
-        idx = Mid(x1:x2, y1:y2);
+    [im_h, im_w] = size( LR_Bicubic{i} );
+    for j = 1:5,
+        if j == 5, 
+            tmp = logical(zeros( im_h, im_w ));
+            for iter = 1:numel(comp{j}),
+                y1 = floor(max(1, lm(comp{j}(iter),1))-2*par.lg);
+                y2 = ceil(min(im_h, lm(comp{j},1))+2*par.lg);
+                x1 = floor(max(1, lm(comp{j},2))-2*par.lg);
+                x2 = ceil(min(im_w, lm(comp{j},2))+2*par.lg);
+                tmp(x1:x2, y1:y2) = 1;
+            end
+            t = Mid(:);
+            idx = t(tmp(:));
+        else
+            y1 = floor(min(lm(comp{j},1))-par.lg);
+            y2 = ceil(max(lm(comp{j},1))+par.lg);
+            x1 = floor(min(lm(comp{j},2))-par.lg);
+            x2 = ceil(max(lm(comp{j},2))+par.lg);
+            idx = Mid(x1:x2, y1:y2);
+        end
       %  fprintf('%d %d %d %d\n', x1, x2, y1, y2);
         Tl1 = Tl(:, idx(idx > 0));
         Th1 = Th(:, idx(idx > 0));
@@ -95,9 +109,10 @@ for i = 1 : img_num
         Cp{j+1} = [Cp{j+1}, Tl1];
     end
     
+    
 end
 
-for i = 1:5,
+for i = 1:6,
     Cp{i} = double(Cp{i});
     Cs{i} = double(Cs{i});
 end

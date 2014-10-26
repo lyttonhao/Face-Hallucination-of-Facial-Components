@@ -21,7 +21,7 @@ comp{2} = 18:27;        %eyebrows
 comp{3} = 37:48;        %eyes
 comp{4} = 28:36;        %nose
 
-for pp = [7,9,11],
+for pp = [9],
     for ss = [100000],
      
 
@@ -62,7 +62,7 @@ param.iter = 100;
 param.L = 30;
 for lambda = [ 0.15],
      param.lambda = lambda; 
-for nnn = [5,7,9,11],
+for nnn = [9],
     tot = 0;
     for img = 1:3,
 
@@ -141,15 +141,26 @@ for nnn = [5,7,9,11],
     hf2 = [1,0,-2,0,1];
     vf2 = [1,0,-2,0,1]';
     
-    Mid = createIdx( size(imHR,1), size(imHR,2), patch_size );
+    %Mid = createIdx( size(imHR,1), size(imHR,2), patch_size );
     Type = ones(size(imHR));
       
-    for j = 1:4,
-        y1 = floor(min(lm(comp{j},1))-par.lg);
-        y2 = ceil(max(lm(comp{j},1))+par.lg);
-        x1 = floor(min(lm(comp{j},2))-par.lg);
-        x2 = ceil(max(lm(comp{j},2))+par.lg);
-        Type(x1:x2, y1:y2) = j+1;
+    for j = 1:5,
+        if j == 5, 
+            tmp = logical(zeros( im_h, im_w ));
+            for iter = 1:numel(comp{j}),
+                y1 = floor(max(1, lm(comp{j}(iter),1))-2*par.lg);
+                y2 = ceil(min(im_h, lm(comp{j},1))+2*par.lg);
+                x1 = floor(max(1, lm(comp{j},2))-2*par.lg);
+                x2 = ceil(min(im_w, lm(comp{j},2))+2*par.lg);
+                Type(x1:x2, y1:y2) = j+1;
+            end
+        else
+            y1 = floor(min(lm(comp{j},1))-par.lg);
+            y2 = ceil(max(lm(comp{j},1))+par.lg);
+            x1 = floor(min(lm(comp{j},2))-par.lg);
+            x2 = ceil(max(lm(comp{j},2))+par.lg);
+            Type(x1:x2, y1:y2) = j+1;
+        end
     end
     Type = Type(1:size(imHR,1)-patch_size+1, 1:size(imHR,2)-patch_size+1);
     Type = Type(:);
