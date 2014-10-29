@@ -1,6 +1,5 @@
-% LLE method
 
-clear all;clc;
+%clear all;clc;
 
 addpath('Flann')
 addpath('Data');
@@ -20,6 +19,7 @@ comp{1} = 49:68;        %mouth
 comp{2} = 18:27;        %eyebrows
 comp{3} = 37:48;        %eyes
 comp{4} = 28:36;        %nose
+comp{5} = 1:17;         %face edge
 
 for pp = [9],
     for ss = [100000],
@@ -28,8 +28,9 @@ for pp = [9],
 %lambda      = 0.15;         % sparsity regularization
 patch_size = pp;
 nSmp        = ss;       % number of patches to sample
-
-par.nFactor = 8;
+par.lamB = 2;           % lamada in RefineBlur
+par.niterB = 40;        % iterative number in RefineBlur
+par.nFactor = 6;
 par.win = patch_size;
 par.step = 1;
 par.prunvar = 5;
@@ -38,17 +39,17 @@ par.psf =   fspecial('gauss', 7, 1.6);              % The simulated PSF
 
 
 % randomly sample image patches
-[Cp, Cs] = Smp_patch_blur_FC( patch_size, nSmp, par);
+%[Cp, Cs] = Smp_patch_blur_FC( patch_size, nSmp, par);
 %[TU, BU, U, Cp, Cs] = Smp_patch_blur_NMF( patch_size, nSmp, par);
 %[PL, PH, Cp, Cs] = Smp_patch_blur_PCA( patch_size, nSmp, par);
 %[U, V, Ih, Cp, Cs] = Smp_patch_blur_NMF_GL( patch_size, nSmp, par);
-%save(['Cps',num2str(par.nFactor)], 'Cp', 'Cs');
-%load(['Cps',num2str(par.nFactor)]);
+%save(['Mat/Cps',num2str(par.nFactor)], 'Cp', 'Cs');
+load(['Mat/Cps',num2str(par.nFactor)]);
 %load BU;
 
 %[Cp, V_pca] = PCA(Cp);
 
-for i = 1:5,
+for i = 1:6,
     dataset = Cp{i};  
     build_params.target_precision = 1;  
     build_params.build_weight = 0.5; 
@@ -176,7 +177,7 @@ for nnn = [9],
    testset = double(vec_patches);
  %  testset = V_pca' * testset;
 
-    for i = 1:5,
+    for i = 1:6,
            [idx{i},dst{i}] = flann_search(index{i},testset,nn,parameters{i});
         %[idx1,dst] = flann_search(index{i},testset,nn,parameters{i});
         %idx{i} = idx1;
@@ -209,17 +210,10 @@ for nnn = [9],
  
         output = output +  imBicubic ;
         result = output;
-     %   save ('Mat/cman4.mat', 'h1', 'v1', 'l1','r1');
-
-        %save('Mat/out.mat', 'output');
-      %  e_ori = conv2( double(imHR), hf1, 'same');
-      %  fprintf('%d %d %d\nPSNR of Semi-Coupled DL: %2.2f \n',pp, ss, nnn, csnr(e_ori, h1, 5, 5));
-     %   fprintf('%d %d %d\nPSNR of Semi-Coupled DL: %2.2f \n',pp, ss, nnn, csnr(imHR, output, pp, pp));
-
-        %result = func_improve_NL_im(imLR, imHR, imBicubic, h1, v1, l1, r1 );
         
-      
+      %  result = RefineBlur( imLR, imHR, result, par );
 
+       
        fprintf('%d %d %d %s Result: %2.3f \n',pp, ss, nnn, im_dir(img).name, csnr(imHR, result, 0, 0));
        for j = 1:4,
             y1 = floor(min(lm(comp{j},1))-par.lg);
@@ -246,7 +240,7 @@ for nnn = [9],
         end
     
       %  savefile( imLR, ori_HR, im_rgb, result, h1, v1, imB, im_dir(img).name);
-        imwrite(uint8(im_rgb), ['Result/NEFC_s', num2str(par.nFactor), '_', num2str(pp),'-', num2str(nnn),'_',im_dir(img).name]);
+        imwrite(uint8(im_rgb), ['Result/NEFC5_db_s', num2str(par.nFactor), '_', num2str(pp),'-', num2str(nnn),'_',im_dir(img).name]);
         imwrite(uint8(imB), ['Result/s', num2str(par.nFactor), '_bicubic', im_dir(img).name]);
         imwrite(uint8(imLR), ['Result/s', num2str(par.nFactor), '_LR', im_dir(img).name]);
     end

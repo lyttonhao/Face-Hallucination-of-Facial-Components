@@ -105,6 +105,12 @@ for i = 1 : img_num
       %  fprintf('%d %d %d %d\n', x1, x2, y1, y2);
         Tl1 = Tl(:, idx(idx > 0));
         Th1 = Th(:, idx(idx > 0));
+        idx = randperm(size(Th1, 2));
+        if size(Th1, 2) < n,
+            n = size(Th1, 2);
+        end
+        Th1 = Th1(:, idx(1:n));
+        Tl1 = Tl1(:, idx(1:n)); 
         Cs{j+1} = [Cs{j+1}, Th1];
         Cp{j+1} = [Cp{j+1}, Tl1];
     end
