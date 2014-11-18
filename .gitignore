@@ -1,0 +1,11 @@
+*.jpg
+*.mat
+spams-matlab/
+Result/
+ompbox/
+*.png
+ksvdbox/
+Flann/
+*.bmp
+*.tif
+*.asv
