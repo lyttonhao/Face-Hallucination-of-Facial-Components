@@ -1,9 +1,16 @@
 function landmarks = F4_ConvertBStoMultiPieLandmarks(bs)
+
+
+    n = size(bs.xy, 1);
     %compute the block center
-    centerxy = zeros(68,2);
-    for i=1:68
+    centerxy = zeros(n,2);
+    for i=1:n
         centerxy(i,1) = (bs.xy(i,1) + bs.xy(i,3))/2;
         centerxy(i,2) = (bs.xy(i,2) + bs.xy(i,4))/2;
+    end
+    landmarks = centerxy;
+    if n == 39,
+        return;
     end
     
     %re-order as the Multi-Pie format

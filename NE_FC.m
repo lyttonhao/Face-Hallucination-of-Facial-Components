@@ -1,5 +1,5 @@
 
-%clear all;clc;
+clear all;clc;
 
 addpath('Flann')
 addpath('Data');
@@ -10,16 +10,12 @@ addpath('spams-matlab/build');
 cc = 0;
 re = [];
 
-im_path = 'Data/Face_Testing1/';
+im_path = 'Data/Face_Testing4/';
 im_dir = dir( fullfile(im_path, '*.png') );
 im_num = length( im_dir );
 %load('Data/train3.mat');
 
-comp{1} = 49:68;        %mouth
-comp{2} = 18:27;        %eyebrows
-comp{3} = 37:48;        %eyes
-comp{4} = 28:36;        %nose
-comp{5} = 1:17;         %face edge
+[compf, compp] = Comp_lm(); %components landmarks of frontal and profile faces
 
 for pp = [9],
     for ss = [100000],
@@ -35,16 +31,17 @@ par.win = patch_size;
 par.step = 1;
 par.prunvar = 5;
 par.lg = 5;
+par.margin = pp;
 par.psf =   fspecial('gauss', 7, 1.6);              % The simulated PSF
 
 
 % randomly sample image patches
-%[Cp, Cs] = Smp_patch_blur_FC( patch_size, nSmp, par);
+[Cp, Cs] = Smp_patch_blur_FC( patch_size, nSmp, par);
 %[TU, BU, U, Cp, Cs] = Smp_patch_blur_NMF( patch_size, nSmp, par);
 %[PL, PH, Cp, Cs] = Smp_patch_blur_PCA( patch_size, nSmp, par);
 %[U, V, Ih, Cp, Cs] = Smp_patch_blur_NMF_GL( patch_size, nSmp, par);
-%save(['Mat/Cps',num2str(par.nFactor)], 'Cp', 'Cs');
-load(['Mat/Cps',num2str(par.nFactor)]);
+save(['Mat/Cps5',num2str(par.nFactor)], 'Cp', 'Cs');
+%load(['Mat/Cps4',num2str(par.nFactor)]);
 %load BU;
 
 %[Cp, V_pca] = PCA(Cp);
@@ -64,8 +61,8 @@ param.L = 30;
 for lambda = [ 0.15],
      param.lambda = lambda; 
 for nnn = [9],
-    tot = 0;
-    for img = 1:3,
+    tot = []; re_bi = [];
+    for img = 1:im_num,
 
     imHR = imread( fullfile(im_path, im_dir(img).name) );
   %  imHR = images_hr(:,:,100);
@@ -109,7 +106,12 @@ for nnn = [9],
          continue;
     end
     lm = F4_ConvertBStoMultiPieLandmarks(bs(1));
-
+ %   save_landmark_fig(bs, posemap, uint8(imMid), lm, ['tmp/Landmark',im_dir(img).name,'.png'] );
+    if size(lm, 1) == 68,
+       comp = compf;
+    else
+       comp = compp;
+    end
   %  imLR = imHR;
     
   %  imBicubic = imresize(imHR, par.nFactor, 'bicubic');
@@ -119,17 +121,10 @@ for nnn = [9],
     [CX CY] = meshgrid(1 : im_w, 1:im_h);
     [X Y] = meshgrid(1:par.nFactor:im_w, 1:par.nFactor:im_h);
     imBicubic  =   interp2(X, Y, imLR, CX, CY, 'spline');
-    
-%    imNMF = get_imNMF(TU, BU, U, imLR, im_h, im_w);
-   % imNMF = get_imPCA(PL, PH, imLR, im_h, im_w);
- %   imNMF = get_imNMF_GL(U, V, Ih, imLR, im_h, im_w);
-   % c = (BU) \ imLR(:);
-   % imNMF = U * c;
-   % imNMF = reshape(imNMF, [im_h, im_w]);
- %   imNMF = imBicubic;
- 
+
     
     fprintf('Bicubic: %2.2f \n', csnr(imHR, imBicubic, 0, 0));
+    re_bi = [re_bi, csnr(imHR, imBicubic, 0, 0)];
   %  fprintf('NMF: %2.2f \n', csnr(imHR, imNMF, 0, 0));
     
     hf1 = [-1,0,1];
@@ -145,26 +140,29 @@ for nnn = [9],
     %Mid = createIdx( size(imHR,1), size(imHR,2), patch_size );
     Type = ones(size(imHR));
       
-    for j = 1:5,
+    for j = 1:5,  %±ﬂ‘µ”√1
         if j == 5, 
             tmp = logical(zeros( im_h, im_w ));
             for iter = 1:numel(comp{j}),
-                y1 = floor(max(1, lm(comp{j}(iter),1))-2*par.lg);
-                y2 = ceil(min(im_h, lm(comp{j},1))+2*par.lg);
-                x1 = floor(max(1, lm(comp{j},2))-2*par.lg);
-                x2 = ceil(min(im_w, lm(comp{j},2))+2*par.lg);
+                y1 = max(1+par.margin, floor(lm(comp{j}(iter),1)-2*par.lg));   
+                y2 = min(im_w-par.margin, ceil(lm(comp{j}(iter),1)+2*par.lg));
+                x1 = max(1+par.margin, floor(lm(comp{j}(iter),2)-2*par.lg));
+                x2 = min(im_h-par.margin, ceil(lm(comp{j}(iter),2)+2*par.lg));
                 Type(x1:x2, y1:y2) = j+1;
             end
         else
-            y1 = floor(min(lm(comp{j},1))-par.lg);
-            y2 = ceil(max(lm(comp{j},1))+par.lg);
-            x1 = floor(min(lm(comp{j},2))-par.lg);
-            x2 = ceil(max(lm(comp{j},2))+par.lg);
+            y1 = max(1+par.margin, floor(min(lm(comp{j},1))-par.lg));
+            y2 = min(im_w-par.margin, ceil(max(lm(comp{j},1))+par.lg));
+            x1 = max(1+par.margin, floor(min(lm(comp{j},2))-par.lg));
+            x2 = min(im_h-par.margin, ceil(max(lm(comp{j},2))+par.lg));
             Type(x1:x2, y1:y2) = j+1;
         end
     end
     Type = Type(1:size(imHR,1)-patch_size+1, 1:size(imHR,2)-patch_size+1);
+    %Type = Type( size(imHR,1)-patch_size+1: size(imHR,1)-patch_size+1, 1:size(imHR,2)-patch_size+1);
     Type = Type(:);
+    
+   % imBicubic = imBicubic(im_h-patch_size+1: im_h, :);
 
    [v2 h1] = data2patch(conv2(double(imBicubic), vf2, 'same'), conv2(double(imBicubic), hf1, 'same'), par);
    [v1, h2] = data2patch(conv2(double(imBicubic), vf1, 'same'), conv2(double( imBicubic), hf2, 'same'), par);
@@ -187,6 +185,9 @@ for nnn = [9],
    output = zeros(patch_size*patch_size, size(testset,2));
    weight = zeros(size(testset,2), nn);
    for ii = 1:size(testset, 2),
+       if (ii == 18760),
+           ii = ii;
+       end
         t = Type(ii);
                 Ip = testset(:, ii);
                 Ipk = zeros(size(testset,1), nn);
@@ -197,6 +198,9 @@ for nnn = [9],
             end
       
             Coeff = ( Ipk'*Ipk + lambda*eye(nn) ) \ Ipk' * Ip;
+            weight(ii, :) = Coeff';
+            
+           
        %     Coeff = mexLasso(Ip, Ipk, param);
        
             Is = Isk * Coeff;          
@@ -216,15 +220,15 @@ for nnn = [9],
        
        fprintf('%d %d %d %s Result: %2.3f \n',pp, ss, nnn, im_dir(img).name, csnr(imHR, result, 0, 0));
        for j = 1:4,
-            y1 = floor(min(lm(comp{j},1))-par.lg);
-            y2 = ceil(max(lm(comp{j},1))+par.lg);
-            x1 = floor(min(lm(comp{j},2))-par.lg);
-            x2 = ceil(max(lm(comp{j},2))+par.lg);
+            y1 = max(1, floor(min(lm(comp{j},1))-par.lg));
+            y2 = min(im_w, ceil(max(lm(comp{j},1))+par.lg));
+            x1 = max(1, floor(min(lm(comp{j},2))-par.lg));
+            x2 = min(im_h, ceil(max(lm(comp{j},2))+par.lg));
             fprintf('%2.3f ', csnr(imHR(x1:x2,y1:y2), result(x1:x2,y1:y2), 0, 0));
        end
        fprintf('\n');
        
-       tot = tot + csnr(imHR, result, 0, 0);
+       tot = [tot, csnr(imHR, result, 0, 0)];
         
         im_rgb = zeros(size(imBicubic));
         im_rgb(:,:,1) = result;
@@ -240,12 +244,20 @@ for nnn = [9],
         end
     
       %  savefile( imLR, ori_HR, im_rgb, result, h1, v1, imB, im_dir(img).name);
-        imwrite(uint8(im_rgb), ['Result/NEFC5_db_s', num2str(par.nFactor), '_', num2str(pp),'-', num2str(nnn),'_',im_dir(img).name]);
-        imwrite(uint8(imB), ['Result/s', num2str(par.nFactor), '_bicubic', im_dir(img).name]);
-        imwrite(uint8(imLR), ['Result/s', num2str(par.nFactor), '_LR', im_dir(img).name]);
+        imwrite(uint8(im_rgb), ['Result3/5NEFC_s', num2str(par.nFactor), '_', num2str(pp),'-', num2str(nnn),'_',im_dir(img).name]);
+        imwrite(uint8(imB), ['Result3/s', num2str(par.nFactor), '_bicubic', im_dir(img).name]);
+        imwrite(uint8(imLR), ['Result3/s', num2str(par.nFactor), '_LR', im_dir(img).name]);
     end
-   fprintf('%f %d %d  %d, average %2.2f\n',lambda, pp, ss, nnn, tot/im_num);
+   fprintf('%f %d %d  %d, average %2.2f ',lambda, pp, ss, nnn, sum(tot)/im_num);
+   for outi = 1:5,
+        fprintf(', %2.2f ', sum(tot(outi:5:end))/(im_num/5) );
+   end
    
+   fprintf('\nbicubic average: %2.2f',sum(re_bi)/im_num);
+   for outi = 1:5,
+       fprintf(', %2.2f ',  sum(re_bi(outi:5:end))/(im_num/5));
+   end
+   fprintf('\n');
 end
 end
     for i = 1:5,

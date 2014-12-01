@@ -3,7 +3,7 @@ function [Cp, Cs] = Smp_patch_blur_FC(patch_size, num_patch, par)
 addpath('Data');
 addpath('Utilities');
 
-load('Data/train3.mat');
+load('Data/Face_Training5.mat');
 
 hf1 = [-1,0,1];
 vf1 = [-1,0,1]';
@@ -15,11 +15,8 @@ rf1 = zeros(3,3); rf1(1,3) = -1; rf1(3,1) = 1;
 hf2 = [1,0,-2,0,1];
 vf2 = [1,0,-2,0,1]';
 
-comp{1} = 49:68;        %mouth
-comp{2} = 18:27;        %eyebrows
-comp{3} = 37:48;        %eyes
-comp{4} = 28:36;        %nose
-comp{5} = 1:17;         %face edge
+[compf, compp] = Comp_lm(); %components landmarks of frontal and profile faces
+
 
 img_num = size(images_hr, 3)-1;
 nper_img = zeros(1, img_num);
@@ -63,6 +60,11 @@ Mid = createIdx( size(HR_tr{i},1), size(HR_tr{i},2), patch_size );
 
 for i = 1 : img_num    
    lm = landmarks(:,:,i);
+   if lmnum(i) == 68,
+       comp = compf;
+   else
+       comp = compp;
+   end
    n = nper_img(i);
    [v1, h2] = data2patch(conv2(double(LR_Bicubic{i}), vf1, 'same'), conv2(double( LR_Bicubic{i}), hf2, 'same'), par);
    [h1 , v2] = data2patch( conv2(double( LR_Bicubic{i}), hf1, 'same'), conv2(double( LR_Bicubic{i}), vf2, 'same'), par);
@@ -87,19 +89,19 @@ for i = 1 : img_num
         if j == 5, 
             tmp = logical(zeros( im_h, im_w ));
             for iter = 1:numel(comp{j}),
-                y1 = floor(max(1, lm(comp{j}(iter),1))-2*par.lg);
-                y2 = ceil(min(im_h, lm(comp{j},1))+2*par.lg);
-                x1 = floor(max(1, lm(comp{j},2))-2*par.lg);
-                x2 = ceil(min(im_w, lm(comp{j},2))+2*par.lg);
+               y1 = max(1+par.margin, floor(lm(comp{j}(iter),1)-2*par.lg));   
+                y2 = min(im_w-par.margin, ceil(lm(comp{j}(iter),1)+2*par.lg));
+                x1 = max(1+par.margin, floor(lm(comp{j}(iter),2)-2*par.lg));
+                x2 = min(im_h-par.margin, ceil(lm(comp{j}(iter),2)+2*par.lg));
                 tmp(x1:x2, y1:y2) = 1;
             end
             t = Mid(:);
             idx = t(tmp(:));
         else
-            y1 = floor(min(lm(comp{j},1))-par.lg);
-            y2 = ceil(max(lm(comp{j},1))+par.lg);
-            x1 = floor(min(lm(comp{j},2))-par.lg);
-            x2 = ceil(max(lm(comp{j},2))+par.lg);
+            y1 = max(1+par.margin, floor(min(lm(comp{j},1))-par.lg));
+            y2 = min(im_w-par.margin, ceil(max(lm(comp{j},1))+par.lg));
+            x1 = max(1+par.margin, floor(min(lm(comp{j},2))-par.lg));
+            x2 = min(im_h-par.margin, ceil(max(lm(comp{j},2))+par.lg));
             idx = Mid(x1:x2, y1:y2);
         end
       %  fprintf('%d %d %d %d\n', x1, x2, y1, y2);
