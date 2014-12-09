@@ -10,7 +10,7 @@ addpath('spams-matlab/build');
 cc = 0;
 re = [];
 
-im_path = 'Data/Face_Testing4/';
+im_path = 'Data/Face_Testing5/';
 im_dir = dir( fullfile(im_path, '*.png') );
 im_num = length( im_dir );
 %load('Data/train3.mat');
@@ -33,15 +33,16 @@ par.prunvar = 5;
 par.lg = 5;
 par.margin = pp;
 par.psf =   fspecial('gauss', 7, 1.6);              % The simulated PSF
+par.method = 'LLC';
 
 
 % randomly sample image patches
-[Cp, Cs] = Smp_patch_blur_FC( patch_size, nSmp, par);
+%[Cp, Cs] = Smp_patch_blur_FC( patch_size, nSmp, par);
 %[TU, BU, U, Cp, Cs] = Smp_patch_blur_NMF( patch_size, nSmp, par);
 %[PL, PH, Cp, Cs] = Smp_patch_blur_PCA( patch_size, nSmp, par);
 %[U, V, Ih, Cp, Cs] = Smp_patch_blur_NMF_GL( patch_size, nSmp, par);
-save(['Mat/Cps5',num2str(par.nFactor)], 'Cp', 'Cs');
-%load(['Mat/Cps4',num2str(par.nFactor)]);
+%save(['Mat/Cps5',num2str(par.nFactor)], 'Cp', 'Cs');
+load(['Mat/Cps4',num2str(par.nFactor)]);
 %load BU;
 
 %[Cp, V_pca] = PCA(Cp);
@@ -56,10 +57,12 @@ for i = 1:6,
  %   parameters{i} = parameters1;
 end
 
-param.iter = 100;
-param.L = 30;
-for lambda = [ 0.15],
-     param.lambda = lambda; 
+%param.iter = 100;
+%param.L = 30;
+for parameter = [ 0.001, 0.005, 0.01],
+     par.param.lambda = parameter; 
+     par.param.mode = 2;
+     par.param.tu = parameter;
 for nnn = [9],
     tot = []; re_bi = [];
     for img = 1:im_num,
@@ -197,7 +200,8 @@ for nnn = [9],
                 Isk(:, i) = Cs{t}(:,idx{t}(i,ii));
             end
       
-            Coeff = ( Ipk'*Ipk + lambda*eye(nn) ) \ Ipk' * Ip;
+          %  Coeff = ( Ipk'*Ipk + lambda*eye(nn) ) \ Ipk' * Ip;
+            Coeff = Cal_Coeff( Ipk, Ip, nn, par, par.method );
             weight(ii, :) = Coeff';
             
            
@@ -244,11 +248,13 @@ for nnn = [9],
         end
     
       %  savefile( imLR, ori_HR, im_rgb, result, h1, v1, imB, im_dir(img).name);
-        imwrite(uint8(im_rgb), ['Result3/5NEFC_s', num2str(par.nFactor), '_', num2str(pp),'-', num2str(nnn),'_',im_dir(img).name]);
-        imwrite(uint8(imB), ['Result3/s', num2str(par.nFactor), '_bicubic', im_dir(img).name]);
-        imwrite(uint8(imLR), ['Result3/s', num2str(par.nFactor), '_LR', im_dir(img).name]);
+        imwrite(uint8(im_rgb), ['tmp/', par.method, 'NEFC_s', num2str(par.nFactor), '_', num2str(pp),'-', num2str(nnn),'_',im_dir(img).name]);
+        imwrite(uint8(imB), ['tmp/s', num2str(par.nFactor), '_bicubic', im_dir(img).name]);
+    %    imwrite(uint8(imLR), ['Result3/s', num2str(par.nFactor), '_LR', im_dir(img).name]);
     end
-   fprintf('%f %d %d  %d, average %2.2f ',lambda, pp, ss, nnn, sum(tot)/im_num);
+   fprintf('%f %d %d  %d, average %2.2f ',parameter, pp, ss, nnn, sum(tot)/im_num);
+   fprintf('\nbicubic average: %2.2f',sum(re_bi)/im_num);
+%{
    for outi = 1:5,
         fprintf(', %2.2f ', sum(tot(outi:5:end))/(im_num/5) );
    end
@@ -257,6 +263,7 @@ for nnn = [9],
    for outi = 1:5,
        fprintf(', %2.2f ',  sum(re_bi(outi:5:end))/(im_num/5));
    end
+   %}
    fprintf('\n');
 end
 end
