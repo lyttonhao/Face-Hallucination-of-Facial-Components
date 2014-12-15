@@ -1,7 +1,7 @@
 %Generate training and test dataset from CAS-PEAL-R1 dataset
 
-Train_path = 'Data/Face_Training4/';
-sav_mat = 'Data/Face_Training4.mat';
+Train_path = 'Data/Face_Training5/';
+sav_mat = 'Data/Face_Training5.mat';
 Test_path = 'Data/Face_Testing4/';
 dataset_path = 'E:\Database\CAS-PEAL-R1\CAS-PEAL-R1\POSE\';
 
@@ -43,6 +43,17 @@ end
 
 im_dir = dir( fullfile(Train_path, '*.png') );
 n = length( im_dir );
+pose = zeros(n, 1);
+for i = 1:n,
+    t =  im_dir(i).name(20:22)
+    if (strcmp(t,'+00')),
+        pose(i) = 1;
+    elseif (t(1) == '-'),
+        pose(i) = 2;
+    else
+        pose(i) = 3;
+    end
+end
 im = imread( [Train_path, im_dir(1).name] );
 [im_h, im_w, im_c] = size(im);
 images_hr = uint8( zeros(im_h, im_w, n) );
@@ -62,5 +73,5 @@ for i = 1:n,
     lmnum(i) = size(lm, 1);
     images_hr(:,:,i) = im(:,:,1);
 end
-save( sav_mat, 'images_hr', 'landmarks', 'lmnum');
+save( sav_mat, 'images_hr', 'landmarks', 'lmnum', 'pose');
 

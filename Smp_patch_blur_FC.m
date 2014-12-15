@@ -1,4 +1,4 @@
-function [Cp, Cs] = Smp_patch_blur_FC(patch_size, num_patch, par)
+function [Cp, Cs, Pose] = Smp_patch_blur_FC(patch_size, num_patch, par)
 
 addpath('Data');
 addpath('Utilities');
@@ -54,6 +54,7 @@ nper_img = floor(nper_img*num_patch/sum(nper_img));
 for i = 1:6,
     Cp{i} = [];
     Cs{i} = [];
+    Pose{i} = [];
 end
 
 Mid = createIdx( size(HR_tr{i},1), size(HR_tr{i},2), patch_size );
@@ -84,6 +85,7 @@ for i = 1 : img_num
     Th1 = Th1(:, idx);
     Cs{1} = [Cs{1}, Th1];
     Cp{1} = [Cp{1}, Tl1];
+    Pose{1} = [Pose{1}, ones(1, size(Th1, 2))*pose(i)];
     [im_h, im_w] = size( LR_Bicubic{i} );
     for j = 1:5,
         if j == 5, 
@@ -115,6 +117,7 @@ for i = 1 : img_num
         Tl1 = Tl1(:, idx(1:n)); 
         Cs{j+1} = [Cs{j+1}, Th1];
         Cp{j+1} = [Cp{j+1}, Tl1];
+        Pose{j+1} = [Pose{j+1}, ones(1, size(Th1, 2))*pose(i)];
     end
     
     
@@ -123,5 +126,6 @@ end
 for i = 1:6,
     Cp{i} = double(Cp{i});
     Cs{i} = double(Cs{i});
+    Pose{i} = int8(Pose{i});
 end
 
