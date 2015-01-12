@@ -2,19 +2,51 @@
 addpath('lib');
 addpath('lib/face1.0-basic');
 
-im = imread('Data/Face_Testing1/1.png');
-im = imread('Result/s16_bicubic1.png');
+par.nFactor = 4;
+par.psf =   fspecial('gauss', 7, 1.6);      
+imHR = imread('Data/Face_Testing8/001.png');
+ [im_h, im_w,dummy] = size(imHR);
+    im_h = floor((im_h )/par.nFactor)*par.nFactor ;
+    im_w = floor((im_w )/par.nFactor)*par.nFactor ;
+    imHR=imHR(1:im_h,1:im_w,:);
+    
+   
+    ori_HR = imHR;
+    imMid = zeros( size(imHR) );
+  %  fprintf('%s\n', im_dir(img).name);
+    if (size(imHR, 3) == 3)
+        imHR = double(rgb2ycbcr( imHR ) );
+        im_cb = imresize( imHR(:,:,2), 1/par.nFactor, 'Bicubic' );
+        im_cr = imresize( imHR(:,:,3), 1/par.nFactor, 'Bicubic' );
+        im_cb = imresize( im_cb, par.nFactor, 'Bicubic' );
+        im_cr = imresize( im_cr, par.nFactor, 'Bicubic' );
+        imMid(:,:,2) = im_cb;
+        imMid(:,:,3) = im_cr;
+    end
+    
+  %   im_cb = imresize( imHR(:,:,2), par.nFactor, 'Bicubic' );
+  %   im_cr = imresize( imHR(:,:,3), par.nFactor, 'Bicubic' );
+ 
+    imHR = double(imHR(:,:,1));
+    
+    psf                =     par.psf;            
+    imLR = Blur('fwd', imHR, psf);
+    imLR           =   imLR(1 : par.nFactor : im_h, 1 : par.nFactor : im_w);
+    
+    imMid(:,:,1) = imresize( imLR, par.nFactor, 'bicubic');
+    imMid = ycbcr2rgb( uint8(imMid) );
+  %  imMid = ori_HR;
+
+im = ori_HR ;
 %im = rgb2ycbcr( im);
 modelname = 'mi';
-bs = [];
-imshow(im);
 try
         [bs, posemap] = F2_ReturnLandmarks( im, modelname );
 catch err
          disp('Error: The UCI algorithm does not detect a face.');
 end
 landmark_test = F4_ConvertBStoMultiPieLandmarks(bs(1));
-
+%landmark_test = bs(1);
  bshownumber = true;
         bdrawpose = true;
         bvisible = false;

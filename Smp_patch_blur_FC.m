@@ -3,7 +3,7 @@ function [Cp, Cs, Pose] = Smp_patch_blur_FC(patch_size, num_patch, par)
 addpath('Data');
 addpath('Utilities');
 
-load('Data/Face_Training5.mat');
+load(['Data/Face_Training', par.training_set, '.mat']);
 
 hf1 = [-1,0,1];
 vf1 = [-1,0,1]';
@@ -51,7 +51,7 @@ for i = 1 : img_num
 end
 
 nper_img = floor(nper_img*num_patch/sum(nper_img));
-for i = 1:6,
+for i = 1:5,
     Cp{i} = [];
     Cs{i} = [];
     Pose{i} = [];
@@ -85,9 +85,10 @@ for i = 1 : img_num
     Th1 = Th1(:, idx);
     Cs{1} = [Cs{1}, Th1];
     Cp{1} = [Cp{1}, Tl1];
-    Pose{1} = [Pose{1}, ones(1, size(Th1, 2))*pose(i)];
+  %  Pose{1} = [Pose{1}, ones(1, size(Th1, 2))*pose(i)];
     [im_h, im_w] = size( LR_Bicubic{i} );
-    for j = 1:5,
+    n = nper_img(i)/2;
+    for j = 1:4,
         if j == 5, 
             tmp = logical(zeros( im_h, im_w ));
             for iter = 1:numel(comp{j}),
@@ -117,13 +118,13 @@ for i = 1 : img_num
         Tl1 = Tl1(:, idx(1:n)); 
         Cs{j+1} = [Cs{j+1}, Th1];
         Cp{j+1} = [Cp{j+1}, Tl1];
-        Pose{j+1} = [Pose{j+1}, ones(1, size(Th1, 2))*pose(i)];
+     %   Pose{j+1} = [Pose{j+1}, ones(1, size(Th1, 2))*pose(i)];
     end
     
     
 end
 
-for i = 1:6,
+for i = 1:5,
     Cp{i} = double(Cp{i});
     Cs{i} = double(Cs{i});
     Pose{i} = int8(Pose{i});

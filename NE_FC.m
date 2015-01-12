@@ -1,20 +1,21 @@
 
-clear all;clc;
+%clear all;clc;
 
 addpath('Flann')
 addpath('Data');
 addpath('Utilities');
-addpath('lib');
 addpath('spams-matlab');
 addpath('spams-matlab/build');    
+addpath('lib');
+addpath('lib/face1.0-basic');
 cc = 0;
 re = [];
 
-im_path = 'Data/Face_Testing4/';
-im_dir = dir( fullfile(im_path, '*.png') );
+im_path = 'Data/Face_Testing7/';
+im_dir = dir( fullfile(im_path, '*.jpg') );
 im_num = length( im_dir );
 %load('Data/train3.mat');
-
+load('Mat/lms.mat');
 [compf, compp] = Comp_lm(); %components landmarks of frontal and profile faces
 
 for pp = [9],
@@ -26,7 +27,7 @@ patch_size = pp;
 nSmp        = ss;       % number of patches to sample
 par.lamB = 2;           % lamada in RefineBlur
 par.niterB = 40;        % iterative number in RefineBlur
-par.nFactor = 6;
+par.nFactor = 4;
 par.win = patch_size;
 par.step = 1;
 par.prunvar = 5;
@@ -41,8 +42,8 @@ par.method = 'Ridge';
 %[TU, BU, U, Cp, Cs] = Smp_patch_blur_NMF( patch_size, nSmp, par);
 %[PL, PH, Cp, Cs] = Smp_patch_blur_PCA( patch_size, nSmp, par);
 %[U, V, Ih, Cp, Cs] = Smp_patch_blur_NMF_GL( patch_size, nSmp, par);
-%save(['Mat/Cps5',num2str(par.nFactor)], 'Cp', 'Cs', 'Pose');
-load(['Mat/Cps5',num2str(par.nFactor)]);
+%save(['Mat/Cps5_big',num2str(par.nFactor)], 'Cp', 'Cs', 'Pose');
+load(['Mat/Cps5_big',num2str(par.nFactor)]);
 %load BU;
 
 %[Cp, V_pca] = PCA(Cp);
@@ -66,7 +67,7 @@ for parameter = [ 0.15 ],
 for nnn = [9],
     tot = []; re_bi = [];
     info = zeros(im_num, 3);
-    for img = 1:im_num,
+    for img = 50:im_num,
 
     imHR = imread( fullfile(im_path, im_dir(img).name) );
   %  imHR = images_hr(:,:,100);
@@ -103,14 +104,18 @@ for nnn = [9],
     imLR           =   imLR(1 : par.nFactor : im_h, 1 : par.nFactor : im_w);
     
     imMid(:,:,1) = imresize( imLR, par.nFactor, 'bicubic');
+    imMid = ycbcr2rgb( uint8(imMid) );
+    imMid = ori_HR;
     try
-        [bs, posemap] = F2_ReturnLandmarks( imMid, 'mi' );
+  %      [bs, posemap] = F2_ReturnLandmarks( imMid, 'mi' );
     catch err
          disp('Error: The UCI algorithm does not detect a face.');
          continue;
     end
-    lm = F4_ConvertBStoMultiPieLandmarks(bs(1));
- %   save_landmark_fig(bs, posemap, uint8(imMid), lm, ['tmp/Landmark',im_dir(img).name,'.png'] );
+  %  lm = F4_ConvertBStoMultiPieLandmarks(bs(1));
+   % lms{img} = lm;
+   lm = lms{img};
+   % save_landmark_fig(bs, posemap, uint8(imMid), lm, ['tmp/Landmark',im_dir(img).name,'.png'] );
     if size(lm, 1) == 68,
        comp = compf;
     else
@@ -127,8 +132,8 @@ for nnn = [9],
     imBicubic  =   interp2(X, Y, imLR, CX, CY, 'spline');
 
     
-    fprintf('Bicubic: %2.2f \n', csnr(imHR, imBicubic, 0, 0));
-    re_bi = [re_bi, csnr(imHR, imBicubic, 0, 0)];
+    fprintf('Bicubic: %2.2f \n', csnr(imHR, imBicubic, 5, 5));
+    re_bi = [re_bi, csnr(imHR, imBicubic, 5, 5)];
   %  fprintf('NMF: %2.2f \n', csnr(imHR, imNMF, 0, 0));
     
     hf1 = [-1,0,1];
@@ -221,17 +226,17 @@ for nnn = [9],
       %  result = RefineBlur( imLR, imHR, result, par );
 
        
-       fprintf('%d %d %d %s Result: %2.3f \n',pp, ss, nnn, im_dir(img).name, csnr(imHR, result, 0, 0));
+       fprintf('%d %d %d %s Result: %2.3f \n',pp, ss, nnn, im_dir(img).name, csnr(imHR, result, 5, 5));
        for j = 1:4,
             y1 = max(1, floor(min(lm(comp{j},1))-par.lg));
             y2 = min(im_w, ceil(max(lm(comp{j},1))+par.lg));
             x1 = max(1, floor(min(lm(comp{j},2))-par.lg));
             x2 = min(im_h, ceil(max(lm(comp{j},2))+par.lg));
-            fprintf('%2.3f ', csnr(imHR(x1:x2,y1:y2), result(x1:x2,y1:y2), 0, 0));
+            fprintf('%2.3f ', csnr(imHR(x1:x2,y1:y2), result(x1:x2,y1:y2), 5, 5));
        end
        fprintf('\n');
        
-       tot = [tot, csnr(imHR, result, 0, 0)];
+       tot = [tot, csnr(imHR, result, 5, 5)];
         
         im_rgb = zeros(size(imBicubic));
         im_rgb(:,:,1) = result;
@@ -247,8 +252,8 @@ for nnn = [9],
         end
     
       %  savefile( imLR, ori_HR, im_rgb, result, h1, v1, imB, im_dir(img).name);
-        imwrite(uint8(im_rgb), ['tmp/', par.method, 'NEFC_s', num2str(par.nFactor), '_', num2str(pp),'-', num2str(nnn),'_',im_dir(img).name]);
-        imwrite(uint8(imB), ['tmp/s', num2str(par.nFactor), '_bicubic', im_dir(img).name]);
+        imwrite(uint8(im_rgb), ['Result7/', par.method, 'NEFC_s', num2str(par.nFactor), '_', num2str(pp),'-', num2str(nnn),'_',im_dir(img).name]);
+        %imwrite(uint8(imB), ['Result7/s', num2str(par.nFactor), '_bicubic', im_dir(img).name]);
         info(img, :)
     %    imwrite(uint8(imLR), ['Result3/s', num2str(par.nFactor), '_LR', im_dir(img).name]);
     end

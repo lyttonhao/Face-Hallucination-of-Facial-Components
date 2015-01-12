@@ -7,7 +7,7 @@ Cp = [];
 
 addpath('Data');
 addpath('Utilities');
-load('Data/train3.mat');
+load('Data/Face_Training5.mat');
 
 %img_path = 'Data\Face_Training1\';
 %type = '*.jpg';

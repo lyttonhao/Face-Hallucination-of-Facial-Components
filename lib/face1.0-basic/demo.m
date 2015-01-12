@@ -16,9 +16,9 @@
  load multipie_independent.mat
 
 disp('Model visualization');
-%visualizemodel(model,1:13);
+visualizemodel(model,1:3);
 disp('press any key to continue');
-%pause;
+pause;
 
 
 % 5 levels for each octave
@@ -35,7 +35,7 @@ else
     error('Can not recognize this model');
 end
 
-ims = dir('images1/*.jpg');
+ims = dir('images1/*.png');
 for i = 1:length(ims),
     fprintf('testing: %d/%d\n', i, length(ims));
     im = imread(['images1/' ims(i).name]);

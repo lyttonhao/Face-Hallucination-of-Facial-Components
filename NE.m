@@ -1,6 +1,6 @@
 % LLE method
 
-clear all;clc;
+%clear all;clc;
 
 addpath('Flann')
 addpath('Data');
@@ -10,8 +10,8 @@ addpath('spams-matlab/build');
 cc = 0;
 re = [];
 
-im_path = 'Data/Face_Testing1/';
-im_dir = dir( fullfile(im_path, '*.png') );
+im_path = 'Data/Face_Testing7/';
+im_dir = dir( fullfile(im_path, '*.jpg') );
 im_num = length( im_dir );
 
 for pp = [9],
@@ -22,7 +22,7 @@ for pp = [9],
 patch_size = pp;
 nSmp        = ss;       % number of patches to sample
 
-par.nFactor = 6;
+par.nFactor = 4;
 par.win = patch_size;
 par.step = 1;
 par.prunvar = 5;
@@ -30,12 +30,12 @@ par.psf =   fspecial('gauss', 7, 1.6);              % The simulated PSF
 
 
 % randomly sample image patches
-[Cp, Cs] = Smp_patch_blur( patch_size, nSmp, par);
+%[Cp, Cs] = Smp_patch_blur( patch_size, nSmp, par);
 %[TU, BU, U, Cp, Cs] = Smp_patch_blur_NMF( patch_size, nSmp, par);
 %[PL, PH, Cp, Cs] = Smp_patch_blur_PCA( patch_size, nSmp, par);
 %[U, V, Ih, Cp, Cs] = Smp_patch_blur_NMF_GL( patch_size, nSmp, par);
 %save(['NECps',num2str(par.nFactor)], 'Cp', 'Cs');
-%load(['NECps',num2str(par.nFactor)]);
+load(['NECps',num2str(par.nFactor)]);
 %load BU;
 
 %[Cp, V_pca] = PCA(Cp);
@@ -50,8 +50,8 @@ param.L = 30;
 for lambda = [ 0.15],
      param.lambda = lambda; 
 for nnn = [9],
-    tot = 0;
-    for img = 1:3,
+    tot = []; bitot = [];
+    for img = 1:im_num,
 
     imHR = imread( fullfile(im_path, im_dir(img).name) );
     
@@ -88,18 +88,11 @@ for nnn = [9],
     [CX CY] = meshgrid(1 : im_w, 1:im_h);
     [X Y] = meshgrid(1:par.nFactor:im_w, 1:par.nFactor:im_h);
     imBicubic  =   interp2(X, Y, imLR, CX, CY, 'spline');
-    
-%    imNMF = get_imNMF(TU, BU, U, imLR, im_h, im_w);
-   % imNMF = get_imPCA(PL, PH, imLR, im_h, im_w);
- %   imNMF = get_imNMF_GL(U, V, Ih, imLR, im_h, im_w);
-   % c = (BU) \ imLR(:);
-   % imNMF = U * c;
-   % imNMF = reshape(imNMF, [im_h, im_w]);
- %   imNMF = imBicubic;
  
     
-    fprintf('Bicubic: %2.2f \n', csnr(imHR, imBicubic, 0, 0));
+    fprintf('Bicubic: %2.2f \n', csnr(imHR, imBicubic, 5, 5));
   %  fprintf('NMF: %2.2f \n', csnr(imHR, imNMF, 0, 0));
+    bitot = [bitot, csnr(imHR, imBicubic, 5, 5)];
     
     hf1 = [-1,0,1];
     vf1 = [-1,0,1]';
@@ -162,8 +155,8 @@ for nnn = [9],
         
       
 
-       fprintf('%d %d %d %s Result: %2.2f \n',pp, ss, nnn, im_dir(img).name, csnr(imHR, result, 0, 0));
-       tot = tot + csnr(imHR, result, 0, 0);
+       fprintf('%d %d %d %s Result: %2.2f \n',pp, ss, nnn, im_dir(img).name, csnr(imHR, result, 5, 5));
+         tot = [tot, csnr(imHR, result, 5, 5)];
         
         im_rgb = zeros(size(imBicubic));
         im_rgb(:,:,1) = result;
@@ -179,11 +172,15 @@ for nnn = [9],
         end
     
       %  savefile( imLR, ori_HR, im_rgb, result, h1, v1, imB, im_dir(img).name);
-        imwrite(uint8(im_rgb), ['Result/NE_s', num2str(par.nFactor), '_', im_dir(img).name]);
-        imwrite(uint8(imB), ['Result/s', num2str(par.nFactor), '_bicubic', im_dir(img).name]);
-        imwrite(uint8(imLR), ['Result/s', num2str(par.nFactor), '_LR', im_dir(img).name]);
+        imwrite(uint8(im_rgb), ['Result7/NE_s', num2str(par.nFactor), '_', im_dir(img).name]);
+       % imwrite(uint8(imB), ['Result7/s', num2str(par.nFactor), '_bicubic', im_dir(img).name]);
+      %  imwrite(uint8(imLR), ['Result3/s', num2str(par.nFactor), '_LR', im_dir(img).name]);
     end
-   fprintf('%f %d %d  %d, average %2.2f\n',lambda, pp, ss, nnn, tot/im_num);
+%   fprintf('%f %d %d  %d, average %2.2f\n',lambda, pp, ss, nnn, tot/im_num);
+   fprintf('%f %d %d  %d, average %2.2f ',lambda, pp, ss, nnn, sum(tot)/im_num);
+   for outi = 1:5,
+        fprintf(', %2.2f ', sum(tot(outi:5:end))/(im_num/5) );
+   end
    
 end
 end

@@ -1,4 +1,4 @@
-function [ imHR, ori_HR, im_rgb, imB, imBicubic, Type, idx, dst, testset  ] = preprocess( imHR, compf, compp, nn, lm, par, index, parameters )
+function [ imHR, ori_HR, im_rgb, imB, imBicubic, Type, idx, dst, testset  ] = pre_process( imHR, compf, compp, nn, par, index, parameters, lm )
 
     [im_h, im_w,dummy] = size(imHR);
     im_h = floor((im_h )/par.nFactor)*par.nFactor ;
@@ -26,14 +26,14 @@ function [ imHR, ori_HR, im_rgb, imB, imBicubic, Type, idx, dst, testset  ] = pr
     imMid(:,:,1) = imresize( imLR, par.nFactor, 'bicubic');
     imMid = ycbcr2rgb( uint8(imMid) );
     imMid = ori_HR;
-  %{
-    try
-        [bs, posemap] = F2_ReturnLandmarks( imMid, 'mi' );
-    catch err
-         disp('Error: The UCI algorithm does not detect a face.');
+    if isempty( lm ),
+        try
+            [bs, posemap] = F2_ReturnLandmarks( imMid, 'mi' );
+        catch err
+             disp('Error: The UCI algorithm does not detect a face.');
+        end
+        lm = F4_ConvertBStoMultiPieLandmarks(bs(1));
     end
-    lm = F4_ConvertBStoMultiPieLandmarks(bs(1));
-    %}
   %  lm = lms{i};
   %  lms{i} = lm;
  %   save_landmark_fig(bs, posemap, uint8(imMid), lm, ['tmp/Landmark',im_dir(img).name,'.png'] );
@@ -76,7 +76,7 @@ function [ imHR, ori_HR, im_rgb, imB, imBicubic, Type, idx, dst, testset  ] = pr
     %Mid = createIdx( size(imHR,1), size(imHR,2), patch_size );
     Type = ones(size(imHR));
       
-    for j = 1:5,  %±ﬂ‘µ”√1
+    for j = 1:4,  %±ﬂ‘µ”√1
         if j == 5, 
             tmp = logical(zeros( im_h, im_w ));
             for iter = 1:numel(comp{j}),
@@ -107,7 +107,7 @@ function [ imHR, ori_HR, im_rgb, imB, imBicubic, Type, idx, dst, testset  ] = pr
    vec_patches = Tl;
    testset = double(vec_patches);
 
-    for i = 1:6,
+    for i = 1:5,
            [idx{i},dst{i}] = flann_search(index{i},testset,nn,parameters{i});
     end
 
