@@ -1,5 +1,5 @@
-function [Cp, Cs, Pose] = Smp_patch_blur_FC(patch_size, num_patch, par)
-
+function [Cp, Cs] = Smp_patch_blur_FC(patch_size, num_patch, par)
+%sample patches for training set
 addpath('Data');
 addpath('Utilities');
 
@@ -7,16 +7,11 @@ load(['Data/Face_Training', par.training_set, '.mat']);
 
 hf1 = [-1,0,1];
 vf1 = [-1,0,1]';
-
-lf1 = zeros(3,3); lf1(1,1) = -1; lf1(3,3) = 1;
-rf1 = zeros(3,3); rf1(1,3) = -1; rf1(3,1) = 1;
- 
 % second order gradient filters
 hf2 = [1,0,-2,0,1];
 vf2 = [1,0,-2,0,1]';
 
 [compf, compp] = Comp_lm(); %components landmarks of frontal and profile faces
-
 
 img_num = size(images_hr, 3)-1;
 nper_img = zeros(1, img_num);
@@ -47,7 +42,6 @@ for i = 1 : img_num
     %fprintf('PSNR of Bicubic Training Image: %2.2f \n', csnr(imBicubic, imHR, 5, 5));
     HR_tr{i} = imHR;
     LR_Bicubic{i} = imBicubic;
-      
 end
 
 nper_img = floor(nper_img*num_patch/sum(nper_img));
@@ -89,24 +83,11 @@ for i = 1 : img_num
     [im_h, im_w] = size( LR_Bicubic{i} );
     n = nper_img(i)/2;
     for j = 1:4,
-        if j == 5, 
-            tmp = logical(zeros( im_h, im_w ));
-            for iter = 1:numel(comp{j}),
-               y1 = max(1+par.margin, floor(lm(comp{j}(iter),1)-2*par.lg));   
-                y2 = min(im_w-par.margin, ceil(lm(comp{j}(iter),1)+2*par.lg));
-                x1 = max(1+par.margin, floor(lm(comp{j}(iter),2)-2*par.lg));
-                x2 = min(im_h-par.margin, ceil(lm(comp{j}(iter),2)+2*par.lg));
-                tmp(x1:x2, y1:y2) = 1;
-            end
-            t = Mid(:);
-            idx = t(tmp(:));
-        else
-            y1 = max(1+par.margin, floor(min(lm(comp{j},1))-par.lg));
-            y2 = min(im_w-par.margin, ceil(max(lm(comp{j},1))+par.lg));
-            x1 = max(1+par.margin, floor(min(lm(comp{j},2))-par.lg));
-            x2 = min(im_h-par.margin, ceil(max(lm(comp{j},2))+par.lg));
-            idx = Mid(x1:x2, y1:y2);
-        end
+        y1 = max(1+par.margin, floor(min(lm(comp{j},1))-par.lg));
+        y2 = min(im_w-par.margin, ceil(max(lm(comp{j},1))+par.lg));
+        x1 = max(1+par.margin, floor(min(lm(comp{j},2))-par.lg));
+        x2 = min(im_h-par.margin, ceil(max(lm(comp{j},2))+par.lg));
+        idx = Mid(x1:x2, y1:y2);
       %  fprintf('%d %d %d %d\n', x1, x2, y1, y2);
         Tl1 = Tl(:, idx(idx > 0));
         Th1 = Th(:, idx(idx > 0));
@@ -127,6 +108,5 @@ end
 for i = 1:5,
     Cp{i} = double(Cp{i});
     Cs{i} = double(Cs{i});
-    Pose{i} = int8(Pose{i});
 end
 

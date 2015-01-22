@@ -1,5 +1,5 @@
 function [ output ] = SR_reconstruct( Cp, Cs, testset, idx, Type, nn, im_h, im_w, par  )
- 
+ %reconstruct each patch
        output = zeros(par.patch_size*par.patch_size, size(testset,2));
        weight = zeros(size(testset,2), nn);
        for ii = 1:size(testset, 2),
@@ -10,7 +10,6 @@ function [ output ] = SR_reconstruct( Cp, Cs, testset, idx, Type, nn, im_h, im_w
             for i=1:nn
                 Ipk(:, i) = Cp{t}(:,idx{t}(i,ii));
                 Isk(:, i) = Cs{t}(:,idx{t}(i,ii));
-           %     info(img,  Pose{t}(idx{img}{t}(i,ii)) ) = info(img, Pose{t}(idx{img}{t}(i,ii)) )+1;
             end
       
           %  Coeff = ( Ipk'*Ipk + lambda*eye(nn) ) \ Ipk' * Ip;

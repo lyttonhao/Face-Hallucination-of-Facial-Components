@@ -1,4 +1,6 @@
 function [ idx ] = LinkFrames(  i, imBicubic, im_h, im_w, testset, preidx, nn, dst, Type, Cp, par )
+%find similar patches among neighbor frames for current frame
+%then get new nearest neighbors
 
 idx = preidx{i};
 if par.mode == 'Image',

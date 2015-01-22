@@ -25,7 +25,6 @@ function [ imHR, ori_HR, im_rgb, imB, imBicubic, Type, idx, dst, testset  ] = pr
     
     imMid(:,:,1) = imresize( imLR, par.nFactor, 'bicubic');
     imMid = ycbcr2rgb( uint8(imMid) );
-    imMid = ori_HR;
     if isempty( lm ),
         try
             [bs, posemap] = F2_ReturnLandmarks( imMid, 'mi' );
@@ -34,8 +33,6 @@ function [ imHR, ori_HR, im_rgb, imB, imBicubic, Type, idx, dst, testset  ] = pr
         end
         lm = F4_ConvertBStoMultiPieLandmarks(bs(1));
     end
-  %  lm = lms{i};
-  %  lms{i} = lm;
  %   save_landmark_fig(bs, posemap, uint8(imMid), lm, ['tmp/Landmark',im_dir(img).name,'.png'] );
     if size(lm, 1) == 68,
        comp = compf;
@@ -59,46 +56,25 @@ function [ imHR, ori_HR, im_rgb, imB, imBicubic, Type, idx, dst, testset  ] = pr
       end
 
     
-    fprintf('Bicubic: %2.2f \n', csnr(imHR, imBicubic, 5, 5));
-  %  re_bi = [re_bi, csnr(imHR, imBicubic, 5, 5)];
-  %  fprintf('NMF: %2.2f \n', csnr(imHR, imNMF, 0, 0));
+    fprintf('Bicubic: %2.2f \n', csnr(imHR, imBicubic, 0, 0));
     
     hf1 = [-1,0,1];
-    vf1 = [-1,0,1]';
-
-
-    lf1 = zeros(3,3); lf1(1,1) = -1; lf1(3,3) = 1;
-    rf1 = zeros(3,3); rf1(1,3) = -1; rf1(3,1) = 1;
- 
+    vf1 = [-1,0,1]'; 
     hf2 = [1,0,-2,0,1];
     vf2 = [1,0,-2,0,1]';
     
-    %Mid = createIdx( size(imHR,1), size(imHR,2), patch_size );
-    Type = ones(size(imHR));
-      
-    for j = 1:4,  %±ﬂ‘µ”√1
-        if j == 5, 
-            tmp = logical(zeros( im_h, im_w ));
-            for iter = 1:numel(comp{j}),
-                y1 = max(1+par.margin, floor(lm(comp{j}(iter),1)-2*par.lg));   
-                y2 = min(im_w-par.margin, ceil(lm(comp{j}(iter),1)+2*par.lg));
-                x1 = max(1+par.margin, floor(lm(comp{j}(iter),2)-2*par.lg));
-                x2 = min(im_h-par.margin, ceil(lm(comp{j}(iter),2)+2*par.lg));
-                Type(x1:x2, y1:y2) = j+1;
-            end
-        else
+    Type = ones(size(imHR));   %belong to which component      
+    for j = 1:4, 
             y1 = max(1+par.margin, floor(min(lm(comp{j},1))-par.lg));
             y2 = min(im_w-par.margin, ceil(max(lm(comp{j},1))+par.lg));
             x1 = max(1+par.margin, floor(min(lm(comp{j},2))-par.lg));
             x2 = min(im_h-par.margin, ceil(max(lm(comp{j},2))+par.lg));
             Type(x1:x2, y1:y2) = j+1;
-        end
     end
     Type = Type(1:size(imHR,1)-par.patch_size+1, 1:size(imHR,2)-par.patch_size+1);
     %Type = Type( size(imHR,1)-patch_size+1: size(imHR,1)-patch_size+1, 1:size(imHR,2)-patch_size+1);
     Type = Type(:);
     
-   % imBicubic = imBicubic(im_h-patch_size+1: im_h, :);
 
    [v2 h1] = data2patch(conv2(double(imBicubic), vf2, 'same'), conv2(double(imBicubic), hf1, 'same'), par);
    [v1, h2] = data2patch(conv2(double(imBicubic), vf1, 'same'), conv2(double( imBicubic), hf2, 'same'), par);
@@ -107,10 +83,9 @@ function [ imHR, ori_HR, im_rgb, imB, imBicubic, Type, idx, dst, testset  ] = pr
    vec_patches = Tl;
    testset = double(vec_patches);
 
+    % fine nearest neighbors
     for i = 1:5,
            [idx{i},dst{i}] = flann_search(index{i},testset,nn,parameters{i});
     end
-
-
 end
 
