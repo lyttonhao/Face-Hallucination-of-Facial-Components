@@ -1,11 +1,11 @@
 
 %readVideo
 addpath('Utilities/YUV2Image');
-workingDir = 'Data/Face_Testing8/';
+workingDir = 'Data/Face_Testing8_v/';
 VideoName = ('Data/FOREMAN_cif.yuv');
 width = 352; Height = 288;
 Frames = 1:90;
- %[mov, imgRgb] = loadFileYuv( VideoName, width, Height, Frames);
+ [mov, imgRgb] = loadFileYuv( VideoName, width, Height, Frames);
 
 for ii = 45:55,
    %   filename = [sprintf('%03d',ii) '.png'];
@@ -16,7 +16,7 @@ for ii = 45:55,
    for j = 1:3,
     im(:,:,j) = img(:,:,j);
    end
-   im = im(30:245, 80:270,:);
+%   im = im(30:245, 80:270,:);
    filename = [sprintf('%03d',ii) '.png'];
    fullname = fullfile(workingDir,filename);
  %  im = imresize(im, 0.4, 'bicubic');

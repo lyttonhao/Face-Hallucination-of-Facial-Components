@@ -12,17 +12,17 @@ addpath('lib/OpticalFlow/mex');
 cc = 0;
 re = [];
 
-im_path = 'Data/Face_Testing4/';
+im_path = 'Data/Face_Testing8_v/';
 im_dir = dir( fullfile(im_path, '*.png') );
 im_num = length( im_dir );
-im_num = 10;
+%im_num = 10;
 %im_num = 3;
 %load('Data/train3.mat');
 %load('Mat/lms.mat');
 [compf, compp] = Comp_lm(); %components landmarks of frontal and profile faces
 
-for pp = [5, 7, 9],
-    for ss = [100000, 500000],
+for pp = [9],
+    for ss = [500000],
      
 
 %lambda      = 0.15;         % sparsity regularization
@@ -40,7 +40,7 @@ par.search_win = 2; %half of the search window size
 par.margin = pp;
 par.psf =   fspecial('gauss', 7, 1.6);              % The simulated PSF
 par.method = 'LLC';
-par.mode = 'Image'; %Video or Image
+par.mode = 'Video'; %Video or Image
 % set optical flow parameters (see Coarse2FineTwoFrames.m for the definition of the parameters)
 alpha = 0.012;
 ratio = 0.75;
@@ -53,12 +53,12 @@ par.OFpara = [alpha,ratio,minWidth,nOuterFPIterations,nInnerFPIterations,nSORIte
 
 par.training_set = '7';
 % randomly sample image patches
-[Cp, Cs, Pose] = Smp_patch_blur_FC( patch_size, nSmp, par);
+%[Cp, Cs, Pose] = Smp_patch_blur_FC( patch_size, nSmp, par);
 %[TU, BU, U, Cp, Cs] = Smp_patch_blur_NMF( patch_size, nSmp, par);
 %[PL, PH, Cp, Cs] = Smp_patch_blur_PCA( patch_size, nSmp, par);
 %[U, V, Ih, Cp, Cs] = Smp_patch_blur_NMF_GL( patch_size, nSmp, par);
-save(['Mat/Training',par.training_set,'_',num2str(ss), '_', num2str(par.nFactor)], 'Cp', 'Cs');
-%load(['Mat/Training5_',num2str(ss), '_', num2str(par.nFactor)], 'Cp', 'Cs');
+%save(['Mat/Training',par.training_set,'_',num2str(ss), '_', num2str(par.nFactor)], 'Cp', 'Cs', '-v7.3');
+%load(['Mat/Training',par.training_set,'_',num2str(ss), '_', num2str(par.nFactor)], 'Cp', 'Cs');
 %load BU;
 
 %[Cp, V_pca] = PCA(Cp);
@@ -76,8 +76,8 @@ end
 for parameter = [ 0.15 ],
      par.param.lambda = parameter; 
      par.param.mode = 2;
-     par.param.tu = parameter;
-for nnn = [7,9,11],
+     par.param.tu = 0.005;
+for nnn = [9],
     nn = nnn;   
     tot = []; NLtot = []; re_bi = [];
     testsets = [];
@@ -125,8 +125,8 @@ for nnn = [7,9,11],
            im_rgb{img-1} = ycbcr2rgb( uint8( im_rgb{img-1} ) );
 
           %  savefile( imLR, ori_HR, im_rgb, result, h1, v1, imB, im_dir(img).name);
-            imwrite(uint8(im_rgb{img-1}), ['Result7/',par.method,'_training4_',num2str(ss),'_', 'NEFC_s', num2str(par.nFactor), '_', num2str(pp),'-', num2str(nnn),'_',im_dir(img-1).name]);
-            imwrite(uint8(imB{img-1}), ['Result7/bicubic_s', num2str(par.nFactor), im_dir(img-1).name]);
+            imwrite(uint8(im_rgb{img-1}), ['Result8/v',par.method,'_training4_',num2str(ss),'_', 'NEFC_s', num2str(par.nFactor), '_', num2str(pp),'-', num2str(nnn),'_',im_dir(img-1).name]);
+            imwrite(uint8(imB{img-1}), ['Result8/vbicubic_s', num2str(par.nFactor), im_dir(img-1).name]);
         %    info(img, :)
         %    imwrite(uint8(imLR), ['Result3/s', num2str(par.nFactor), '_LR', im_dir(img).name]);
             if (img > 2)

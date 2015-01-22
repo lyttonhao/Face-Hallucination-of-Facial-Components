@@ -10,8 +10,8 @@ addpath('spams-matlab/build');
 cc = 0;
 re = [];
 
-im_path = 'Data/Face_Testing7/';
-im_dir = dir( fullfile(im_path, '*.jpg') );
+im_path = 'Data/Face_Testing4/';
+im_dir = dir( fullfile(im_path, '*.png') );
 im_num = length( im_dir );
 
 for pp = [9],
@@ -30,12 +30,12 @@ par.psf =   fspecial('gauss', 7, 1.6);              % The simulated PSF
 
 
 % randomly sample image patches
-%[Cp, Cs] = Smp_patch_blur( patch_size, nSmp, par);
+[Cp, Cs] = Smp_patch_blur( patch_size, nSmp, par);
 %[TU, BU, U, Cp, Cs] = Smp_patch_blur_NMF( patch_size, nSmp, par);
 %[PL, PH, Cp, Cs] = Smp_patch_blur_PCA( patch_size, nSmp, par);
 %[U, V, Ih, Cp, Cs] = Smp_patch_blur_NMF_GL( patch_size, nSmp, par);
-%save(['NECps',num2str(par.nFactor)], 'Cp', 'Cs');
-load(['NECps',num2str(par.nFactor)]);
+%save(['Mat/NECps',num2str(par.nFactor)], 'Cp', 'Cs');
+%load(['NECps',num2str(par.nFactor)]);
 %load BU;
 
 %[Cp, V_pca] = PCA(Cp);
@@ -90,9 +90,9 @@ for nnn = [9],
     imBicubic  =   interp2(X, Y, imLR, CX, CY, 'spline');
  
     
-    fprintf('Bicubic: %2.2f \n', csnr(imHR, imBicubic, 5, 5));
+    fprintf('Bicubic: %2.2f \n', csnr(imHR, imBicubic, 0, 0));
   %  fprintf('NMF: %2.2f \n', csnr(imHR, imNMF, 0, 0));
-    bitot = [bitot, csnr(imHR, imBicubic, 5, 5)];
+    bitot = [bitot, csnr(imHR, imBicubic, 0, 0)];
     
     hf1 = [-1,0,1];
     vf1 = [-1,0,1]';
@@ -155,8 +155,8 @@ for nnn = [9],
         
       
 
-       fprintf('%d %d %d %s Result: %2.2f \n',pp, ss, nnn, im_dir(img).name, csnr(imHR, result, 5, 5));
-         tot = [tot, csnr(imHR, result, 5, 5)];
+       fprintf('%d %d %d %s Result: %2.2f \n',pp, ss, nnn, im_dir(img).name, csnr(imHR, result, 0, 0));
+         tot = [tot, csnr(imHR, result, 0, 0)];
         
         im_rgb = zeros(size(imBicubic));
         im_rgb(:,:,1) = result;
