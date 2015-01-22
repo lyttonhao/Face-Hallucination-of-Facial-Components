@@ -16,7 +16,7 @@ im_num = length( im_dir );
 
 [compf, compp] = Comp_lm(); %components landmarks of frontal and profile faces
 
-nSmp        = 500000;       % number of patches to sample
+nSmp        = 100000;       % number of patches to sample
 par.lamB = 2;           % lamada in RefineBlur
 par.niterB = 40;        % iterative number in RefineBlur
 par.nFactor = 4;
