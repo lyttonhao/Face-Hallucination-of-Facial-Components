@@ -60,7 +60,7 @@ for i = 1 : img_num
    else
        comp = compp;
    end
-   n = nper_img(i);
+   n = fix(nper_img(i));
    [v1, h2] = data2patch(conv2(double(LR_Bicubic{i}), vf1, 'same'), conv2(double( LR_Bicubic{i}), hf2, 'same'), par);
    [h1 , v2] = data2patch( conv2(double( LR_Bicubic{i}), hf1, 'same'), conv2(double( LR_Bicubic{i}), vf2, 'same'), par);
    Tl = [h1;v1;h2;v2];
@@ -81,7 +81,7 @@ for i = 1 : img_num
     Cp{1} = [Cp{1}, Tl1];
   %  Pose{1} = [Pose{1}, ones(1, size(Th1, 2))*pose(i)];
     [im_h, im_w] = size( LR_Bicubic{i} );
-    n = nper_img(i)/2;
+    n = fix(nper_img(i)/2);
     for j = 1:4,
         y1 = max(1+par.margin, floor(min(lm(comp{j},1))-par.lg));
         y2 = min(im_w-par.margin, ceil(max(lm(comp{j},1))+par.lg));
@@ -89,14 +89,14 @@ for i = 1 : img_num
         x2 = min(im_h-par.margin, ceil(max(lm(comp{j},2))+par.lg));
         idx = Mid(x1:x2, y1:y2);
       %  fprintf('%d %d %d %d\n', x1, x2, y1, y2);
-        Tl1 = Tl(:, idx(idx > 0));
-        Th1 = Th(:, idx(idx > 0));
+        Tl1 = Tl(1:end, idx(idx > 0));
+        Th1 = Th(1:end, idx(idx > 0));
         idx = randperm(size(Th1, 2));
         if size(Th1, 2) < n,
             n = size(Th1, 2);
         end
-        Th1 = Th1(:, idx(1:n));
-        Tl1 = Tl1(:, idx(1:n)); 
+        Th1 = Th1(1:end, idx(1:n));
+        Tl1 = Tl1(1:end, idx(1:n)); 
         Cs{j+1} = [Cs{j+1}, Th1];
         Cp{j+1} = [Cp{j+1}, Tl1];
      %   Pose{j+1} = [Pose{j+1}, ones(1, size(Th1, 2))*pose(i)];
